@@ -1,0 +1,68 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"kind":"DaemonSet","apiVersion":"extensions/v1beta1","metadata":{"name":"dd-agent","namespace":"default","selfLink":"/apis/extensions/v1beta1/namespaces/default/daemonsets/dd-agent","uid":"35669ca0-969b-11e6-86d8-005056010008","resourceVersion":"54396803","generation":2,"creationTimestamp":"2016-10-20T08:00:04Z","labels":{"app":"dd-agent"}},"spec":{"selector":{"matchLabels":{"app":"dd-agent"}},"template":{"metadata":{"name":"dd-agent","creationTimestamp":null,"labels":{"app":"dd-agent"}},"spec":{"volumes":[{"name":"dockersocket","hostPath":{"path":"/var/run/docker.sock"}},{"name":"procdir","hostPath":{"path":"/proc"}},{"name":"cgroups","hostPath":{"path":"/sys/fs/cgroup"}},{"name":"datadog-config","persistentVolumeClaim":{"claimName":"datadog-config"}}],"containers":[{"name":"dd-agent","image":"datadog/docker-dd-agent:latest","ports":[{"name":"dogstatsdport","containerPort":8125,"protocol":"TCP"}],"env":[{"name":"API_KEY","valueFrom":{"secretKeyRef":{"name":"datadog-agent-secret","key":"api.key"}}},{"name":"KUBERNETES","value":"yes"}],"resources":{},"volumeMounts":[{"name":"dockersocket","mountPath":"/var/run/docker.sock"},{"name":"procdir","readOnly":true,"mountPath":"/host/proc"},{"name":"cgroups","readOnly":true,"mountPath":"/host/sys/fs/cgroup"},{"name":"datadog-config","mountPath":"/etc/dd-agent/conf.d/external"}],"terminationMessagePath":"/dev/termination-log","imagePullPolicy":"Always"}],"restartPolicy":"Always","terminationGracePeriodSeconds":30,"dnsPolicy":"ClusterFirst","securityContext":{}}}},"status":{"currentNumberScheduled":3,"numberMisscheduled":0,"desiredNumberScheduled":3}}'
+  creationTimestamp: 2016-10-20T08:00:04Z
+  generation: 3
+  labels:
+    app: dd-agent
+  name: dd-agent
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: dd-agent
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: dd-agent
+      name: dd-agent
+    spec:
+      containers:
+      - env:
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: api.key
+              name: datadog-agent-secret
+        - name: KUBERNETES
+          value: "yes"
+        image: datadog/docker-dd-agent:latest
+        imagePullPolicy: Always
+        name: dd-agent
+        ports:
+        - containerPort: 8125
+          name: dogstatsdport
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        volumeMounts:
+        - mountPath: /var/run/docker.sock
+          name: dockersocket
+        - mountPath: /host/proc
+          name: procdir
+          readOnly: true
+        - mountPath: /host/sys/fs/cgroup
+          name: cgroups
+          readOnly: true
+        - mountPath: /etc/dd-agent/conf.d/external
+          name: datadog-config
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - hostPath:
+          path: /var/run/docker.sock
+        name: dockersocket
+      - hostPath:
+          path: /proc
+        name: procdir
+      - hostPath:
+          path: /sys/fs/cgroup
+        name: cgroups
+      - name: datadog-config
+        persistentVolumeClaim:
+          claimName: datadog-config

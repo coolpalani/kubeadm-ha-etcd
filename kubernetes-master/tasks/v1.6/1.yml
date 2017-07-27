@@ -1,0 +1,29 @@
+- name: create pki directory
+  file:
+    path: /etc/kubernetes/pki/
+    state: directory
+    mode: 0755
+
+- name: create manifest directory
+  file:
+    path: /etc/kubernetes/manifests/
+    state: directory
+    mode: 0755
+
+- name: create etcd manifest
+  template:
+    src: etcd.j2
+    dest: /etc/kubernetes/manifests/etcd.yaml
+    owner: root
+    mode: 0600
+
+- name: create etcd manifest backup
+  template:
+    src: etcd.j2
+    dest: /etc/kubernetes/manifests/etcd.yaml.bak
+    owner: root
+    mode: 0600
+
+- name: remove empty lines from manifests (ansible templating bug)
+  shell: sed -i '/^$/d' /etc/kubernetes/manifests/*
+  become: yes

@@ -1,0 +1,31 @@
+#- name: create rbac policy for flannel
+#  shell: kubectl create -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel-rbac.yml {{kubectl_args|default()}}
+#  delegate_to: "{{groups.kubemaster[0]}}"
+#  run_once: true
+
+- name: Render network configuration manifest
+  template:
+    src: v1.5/kube-flannel.j2
+    dest: "{{ kubernetes_config_dir }}/kube-flannel.yaml"
+    mode: 0644
+    owner: root
+    group: root
+  when: '"v1.5." in current_kube_version.stdout'
+
+- name: Render network configuration manifest
+  template:
+    src: v1.6/kube-flannel.j2
+    dest: "{{ kubernetes_config_dir }}/kube-flannel.yaml"
+    mode: 0644
+    owner: root
+    group: root
+  when: '"v1.6." in current_kube_version.stdout'
+
+- name: Setup Kubernetes Pod Network flannel
+  command: kubectl apply -f "{{ kubernetes_config_dir }}/kube-flannel.yaml" {{kubectl_args|default()}}
+#  register: task_result
+#  until: task_result.rc == 0
+#  retries: 10
+#  delay: 60
+  when: not is_packer|bool
+

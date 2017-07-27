@@ -1,0 +1,22 @@
+---
+- name: Ensure Kubernetes addons config directory exists
+  file:
+    path: "{{ kubernetes_config_dir }}/{{ item }}"
+    state: directory
+  with_items:
+   - addons
+
+- name: Put addons config files
+  template:
+    src: "{{ item }}"
+    dest: "{{ kubernetes_config_dir }}/addons/{{ item | basename | regex_replace('\\.j2','') }}"
+    mode: 0644
+    owner: root
+    group: root
+  register: config_files
+  with_fileglob:
+    - ../templates/addons/*.j2
+
+- name: Apply addons config files
+  command: kubectl apply -f {{ kubernetes_config_dir }}/addons {{kubectl_args|default()}}
+  when: not is_packer|bool and config_files|changed

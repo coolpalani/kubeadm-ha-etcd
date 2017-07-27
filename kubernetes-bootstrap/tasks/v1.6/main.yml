@@ -1,0 +1,13 @@
+---
+- name: tweak iptables
+  shell: echo "1" > /proc/sys/net/bridge/bridge-nf-call-iptables
+  become: yes
+
+- name: Use json-file docker logging driver
+  lineinfile:
+    dest: /etc/sysconfig/docker
+    regexp: '^OPTIONS='
+    line: "OPTIONS='--selinux-enabled --log-driver=json-file --signature-verification=false'"
+
+- name: Restart docker
+  systemd: name=docker state=restarted

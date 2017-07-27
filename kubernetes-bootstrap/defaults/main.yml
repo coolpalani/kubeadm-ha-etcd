@@ -1,0 +1,5 @@
+---
+is_packer: False
+mount_state: '{{ "present" if is_packer|bool else "mounted" }}'
+systemd_state: '{{ omit if is_packer|bool else "started" }}'
+systemd_daemon_reload: '{{ omit if is_packer|bool else "yes" }}'

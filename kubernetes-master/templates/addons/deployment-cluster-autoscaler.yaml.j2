@@ -1,0 +1,53 @@
+{% if env and env == "aws" -%}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: cluster-autoscaler
+  namespace: kube-system
+  labels:
+    application: cluster-autoscaler
+    kubernetes.io/cluster-service: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: cluster-autoscaler
+  template:
+    metadata:
+      labels:
+        application: cluster-autoscaler
+        kubernetes.io/cluster-service: "true"
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ''
+        scheduler.alpha.kubernetes.io/tolerations: '[{"key":"CriticalAddonsOnly", "operator":"Exists"}]'
+    spec:
+      containers:
+        - image: gcr.io/google_containers/cluster-autoscaler:v0.4.0
+          name: cluster-autoscaler
+          resources:
+            limits:
+              cpu: 100m
+              memory: 300Mi
+            requests:
+              cpu: 100m
+              memory: 300Mi
+          command:
+            - ./cluster-autoscaler
+            - --v={{verbose_level}}
+            - --cloud-provider=aws
+            - --skip-nodes-with-local-storage=false
+            - --skip-nodes-with-system-pods=false
+            - --nodes=1:{{as_max_size|d("10")}}:{{aws_asg|d("CHANGE_ME")}}
+          env:
+            - name: AWS_REGION
+              value: {{aws_region|d("eu-central-1")}}
+          volumeMounts:
+            - name: ssl-certs
+              mountPath: /etc/ssl/certs/
+              readOnly: true
+          imagePullPolicy: "IfNotPresent"
+      volumes:
+        - name: ssl-certs
+          hostPath:
+            path: "/etc/ssl/certs/"
+{% endif -%}

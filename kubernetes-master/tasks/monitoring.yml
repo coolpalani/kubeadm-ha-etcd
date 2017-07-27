@@ -1,0 +1,45 @@
+#- name: Render datadog daemonset configuration
+#  template:
+#    src: dd-agent.j2
+#    dest: "{{ kubernetes_config_dir }}/dd-agent.yml"
+#    mode: 0655
+#    owner: root
+#    group: root
+#
+#- name: Ensure Kubernetes additional config directory exists
+#  file:
+#    path: "{{ kubernetes_config_dir }}/datadog"
+#    state: directory
+#
+#- name: Ensure Kubernetes additional config directory exists
+#  file:
+#    path: "{{ kubernetes_config_dir }}/datadog/auto_conf"
+#    state: directory
+#
+#- name: Render datadog checks 
+#  template:
+#    src: "auto_conf/{{ itemt }}.j2"
+#    dest: "{{ kubernetes_config_dir }}/datadog/{{ item }}"
+#    mode: 0655
+#    owner: root
+#    group: root
+#  with-items:
+#    - http_check.yaml
+#    - kubernetes.yaml
+#    - agent_metrics.yaml.default
+#    - ntp.yaml.default
+#    - disk.yaml.default 
+#
+#- name: Render datadog auto-conf checks 
+#  template:
+#    src: "{{ itemt }}.j2"
+#    dest: "{{ kubernetes_config_dir }}/datadog/auto_conf/{{ item }}"
+#    mode: 0655
+#    owner: root
+#    group: root
+#  with-items:
+#    - etcd.yaml 
+#    - kubernetes_state.yaml
+#
+#- name: Setup Kubernetes Datadog Agent
+#  command: kubectl apply -f "{{ kubernetes_config_dir }}/dd-agent.yml"

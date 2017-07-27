@@ -1,0 +1,47 @@
+---
+- name: sleep
+  shell: sleep 35s
+
+- name: copy generated kubernetes files
+  shell: find /etc/kubernetes/ -maxdepth 10 -type f | cut -d '/' -f4- | grep -v etcd.yaml 
+  register: files_to_copy
+  become: yes
+
+- name: Remove tty from sudo
+  shell: sed -i 's/Defaults    requiretty/#Defaults    requiretty/g' /etc/sudoers
+  become: yes
+
+- name: Fetch stuff from the remote and save to local
+  synchronize: src={{ item }} dest=/tmp/ mode=pull
+  with_items:
+    - "/etc/kubernetes"
+  when: inventory_hostname == groups['kubemaster'][0]
+
+- name: Transfer kubernetes files from localhost
+  copy: src=/tmp/kubernetes/{{ item }} dest=/etc/kubernetes/{{ item }}
+  with_items:
+    - "{{ files_to_copy.stdout_lines }}"
+
+- name: sleep
+  shell: sleep 60s
+
+- name: remove etcd manifest from kubernetes
+  file: 
+    path: /etc/kubernetes/manifests/etcd.yaml
+    state: absent
+
+- name: change etcd master endpoint to cluster
+  shell: sed -i 's/2379/4001/g' /etc/kubernetes/manifests/kube-apiserver.yaml
+  when: inventory_hostname == groups['kubemaster'][0]
+
+- name: restart kubelet
+  service: name=kubelet state=restarted
+
+- name: remove etcd docker container of single node docker container from bootstrap phase
+  shell: > 
+   docker ps -a | grep 'etcd --listen-client' | awk '{print $1}' | xargs docker rm -f
+  become: yes 
+
+- name: copy kubectl configuration file
+  shell: cp /etc/kubernetes/admin.conf /root/ && chown root:root /root/admin.conf && export KUBECONFIG=/root/admin.conf
+  become: yes

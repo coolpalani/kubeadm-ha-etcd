@@ -1,0 +1,29 @@
+---
+- name: include environment specific dataset for Kubernetes Node setup
+  include_vars: group_vars/{{ env }}/vars.yml
+
+- name: Check if kubernetes already configured
+  stat:
+  args:
+    path: /etc/kubernetes/kubelet.conf
+  register: kube_stat
+
+- name: Store token via packer
+  copy:
+   content: "{{ kubernetes_token }}"
+   dest: "/root/kubernetes_token"
+   owner: root
+   group: root
+   mode: 0600
+  no_log: true
+  when: is_packer|bool
+
+- name: Setup Kuberntenes Node on AWS
+  command: kubeadm join --token "{{ kubernetes_token }}" "{{ kubernetes_default_lookup_ip }}":"{{ kube_api_port | d('6443') }}" --skip-preflight-checks
+  when: not is_packer|bool and not kube_stat.stat.exists
+  become: yes
+  register: result
+  until: result.stdout.find("established connection") != -1
+#  retries: 5
+#  delay: 15
+#  failed_when: false

@@ -1,0 +1,86 @@
+---
+- name: get new etcd token
+  shell: curl https://discovery.etcd.io/new\?size\=3
+  register: etcd_discovery_token 
+
+- name: Check if kubernetes cluster already run
+  command: kubectl cluster-info
+  failed_when: false
+  register: kube_cluster
+  check_mode: no
+
+- name: v1.6 specific tasks
+  include: v1.6/1.yml
+  when: '"v1.6." in current_kube_version.stdout and kube_cluster.rc == 1'
+
+- name: Setup Kuberntenes Master
+  shell: kubeadm init --skip-preflight-checks --pod-network-cidr={{ kubernetes_pod_network_cidr }} --token={{ kubernetes_token }} {{kubeadm_args|default()}}
+  async: 300
+  poll: 0
+  when: not is_packer|bool and kube_cluster.rc == 1
+
+- name: Wait for file creation
+  wait_for: path=/etc/kubernetes/manifests/{{item}}.{{ manifest_ext | d("yaml") }} state=present
+  with_items:
+   - kube-apiserver
+   - kube-controller-manager
+   - etcd
+  when: not is_packer|bool
+
+- name: generate new config file
+  shell: >
+   cp -a /etc/kubernetes/manifests/{{item}}.json /etc/kubernetes/manifests/{{item}}.json.bak;
+   jq '.spec.containers[].command=["{{item}}",{{kubernetes_args[item]|join(',')}}]' /etc/kubernetes/manifests/{{item}}.json > /tmp/{{item}} && 
+   cat /tmp/{{item}} > /etc/kubernetes/manifests/{{item}}.json && 
+   rm /tmp/{{item}}
+  with_items:
+   - kube-apiserver
+   - kube-controller-manager
+   - etcd
+  when: 'not is_packer|bool and kube_cluster.rc == 1 and "v1.5." in current_kube_version.stdout'
+
+- name: Ensure Kubernetes additional config directory exists
+  file: 
+    path: "{{ kubernetes_config_dir }}" 
+    state: directory
+
+- name: Wait for kube-api port open
+  wait_for:
+   host: localhost
+   port: "{{ kube_api_port | d('6443') }}"
+   state: started
+   timeout: 120
+  delegate_to: "{{ inventory_hostname }}"
+  when: not is_packer|bool
+
+- name: v1.6 specific tasks
+  include: v1.6/2.yml
+  when: '"v1.6." in current_kube_version.stdout and kube_cluster.rc == 1'
+
+- include: pod-network.yml
+  tags: pod-network
+
+- include: namespaces.yml
+  tags: namespaces
+  when: '"v1.5." in current_kube_version.stdout'
+
+- include: addons.yml
+  tags: addons
+  when: '"v1.5." in current_kube_version.stdout'
+
+- include: kube-route53.yml 
+  tags: addons
+  when: '"v1.5." in current_kube_version.stdout'
+
+- include: autocompletion.yml
+  when: 'ansible_os_family == "RedHat" and "v1.5." in current_kube_version.stdout'
+  tags: autocompletion
+
+- name: Wait for 9898 port open
+  wait_for:
+   host: localhost
+   port: 9898
+   state: started
+   timeout: 120
+  delegate_to: "{{ inventory_hostname }}"
+  when: 'not is_packer|bool and "v1.5." in current_kube_version.stdout'

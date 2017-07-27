@@ -1,0 +1,16 @@
+---
+- name: Install bash-completion
+  yum:
+    name: bash-completion
+    state: present
+    update_cache: yes
+
+- name: Configure bash_profile for completion
+  lineinfile:
+    dest: /root/.bash_profile
+    line: "[[ -f /usr/share/bash-completion/bash_completion ]] && . /usr/share/bash-completion/bash_completion"
+
+- name: Generate kubectl completion file
+  shell: kubectl completion bash > /etc/bash_completion.d/kubectl
+  args:
+   creates: /etc/bash_completion.d/kubectl

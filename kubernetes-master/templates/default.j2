@@ -1,0 +1,67 @@
+Version: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: "404-server"
+    component: default-backend
+    environment: dev
+  name: dev-default-backend
+  namespace: dev
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: "404-server"
+        component: default-backend
+        environment: dev
+    spec:
+      containers:
+      - image: gcr.io/google_containers/defaultbackend:1.2
+        name: default-backend
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+          name: http
+        terminationMessagePath: /dev/termination-log
+      dnsPolicy: ClusterFirst
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dev-default-backend
+  namespace: dev
+spec:
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: "404-server"
+    environment: dev
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: test-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        backend:
+          serviceName: dev-default-backend
+          servicePort: 8080

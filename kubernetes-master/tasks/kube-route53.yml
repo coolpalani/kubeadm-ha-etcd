@@ -1,0 +1,11 @@
+- name: Render namespace configuration manifest
+  template:
+    src: kube-route53.j2 
+    dest: "{{ kubernetes_config_dir }}/kube-kube-route53.yaml"
+    mode: 0644
+    owner: root
+    group: root
+
+- name: Setup Kubernetes Namespaces
+  command: kubectl apply -f "{{ kubernetes_config_dir }}/kube-kube-route53.yaml" {{kubectl_args|default()}}
+  when: not is_packer|bool

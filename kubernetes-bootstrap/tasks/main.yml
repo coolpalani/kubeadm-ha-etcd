@@ -1,0 +1,181 @@
+---
+- name: adding EPEL repo
+  yum_repository:
+    name: EPEL
+    description: EPEL Repository
+    baseurl: https://archives.fedoraproject.org/pub/epel/$releasever/$basearch/
+    gpgcheck: no
+  when: ansible_os_family == 'RedHat'
+
+- name: adding Kubernetes repo
+  yum_repository:
+    name: Kubernetes 
+    description: Kubernetes Repository 
+    baseurl: http://yum.kubernetes.io/repos/kubernetes-el7-x86_64
+    gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg
+  when: ansible_os_family == 'RedHat'
+
+- name: add RPM gpg key for Kubernetes repository  
+  rpm_key:
+    state: present
+    key: https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+  when: ansible_os_family == 'RedHat'
+
+- name: disable SELinux
+  selinux: 
+    state: disabled
+  register: selinux_state
+
+- name: reboot nodes
+  command: /usr/bin/systemd-run --on-active=10 /usr/bin/systemctl reboot
+  async: 0
+  poll: 0
+  register: rebooting
+  when: not is_packer|bool and selinux_state|changed and ansible_os_family == 'RedHat'
+
+- name: wait for server to come back
+  local_action: wait_for
+  args:
+   host: "{{ ansible_ssh_host | default(inventory_hostname,boolean=True) }}"
+   port: 22
+   state: started
+   delay: 60
+   timeout: 600
+  become: false
+  when: not ansible_check_mode and rebooting|changed
+
+#bug: kube-controller-manager didn't maps /etc/pki by default, needed for --cloud-provider=aws
+- name: replace symlinks with hardlinks
+  command: find /etc/ssl/certs/ -type l -exec bash -c 'ln -f "$(readlink -m "$0")" "$0"' {} \;
+  when: env == "aws"
+
+- name: install Docker and it's dependencies
+  yum:
+    name: "{{rpm_version['docker']}}"
+    state: present
+    update_cache: yes
+
+- name: Install Kubernetes Components kubelet, kubeadm, kubectl, kubernetes-cni, ebtables 
+  yum:
+    name: "{{item}}"
+    state: present
+    update_cache: yes
+  with_items:
+    - kubelet
+    - "{{rpm_version['kubeadm']}}"
+    - kubectl
+    - kubernetes-cni
+    - ebtables 
+    - epel-release
+    - jq
+
+- name: Get current kubernetes version
+  shell: kubelet --version | cut -f 2 -d ' '
+  register: current_kube_version
+
+- debug: var=current_kube_version
+
+- name: Set kubeadm args
+  set_fact:
+   kubeadm_args: "--cloud-provider=aws --service-dns-domain={{kubernetes_cluster_tag}}.cluster --use-kubernetes-version={{kubernetes_version_suffix}}"
+  when: '"v1.5." in current_kube_version.stdout'
+
+- name: Set kubeadm args
+  set_fact:
+   kubeadm_args: "--service-dns-domain={{kubernetes_cluster_tag}}.cluster"
+  when: '"v1.6." in current_kube_version.stdout'
+
+- name: Set kubectl args
+  set_fact:
+   kubectl_args: "--kubeconfig=/etc/kubernetes/admin.conf"
+  when: '"v1.6." in current_kube_version.stdout'
+
+- name: Set kube api port for join (pre v1.6)
+  set_fact:
+   kube_api_port: 8080
+  when: '"v1.5." in current_kube_version.stdout'
+
+- name: Set kube api port for join
+  set_fact:
+   kube_api_port: 6443
+  when: '"v1.6." in current_kube_version.stdout'
+
+- name: Set manifest extention (pre v1.6)
+  set_fact:
+   manifest_ext: "json"
+  when: '"v1.5." in current_kube_version.stdout'
+
+- name: Deploy "{{item}}" file
+  template: src={{ item.file }}.j2 dest={{ item.path }}/{{ item.file }} mode=0644 owner=root group=root
+  with_items:
+   - file: 10-kubeadm.conf
+     path: /etc/systemd/system/kubelet.service.d
+  
+- name: enable {{item}}
+  systemd:
+    name: "{{item}}"
+    state: started 
+    enabled: yes
+    daemon_reload: yes
+  with_items:
+   - docker
+   - kubelet
+  register: systemd_enable
+  when: ansible_os_family == 'RedHat'
+
+- name: enable {{item}}
+  service:
+    name: "{{item}}"
+    state: started
+    enabled: yes
+  with_items:
+   - docker
+   - kubelet
+  when: systemd_enable|skipped
+
+- name: Ensure docker config directory exists
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0700
+  with_items:
+    - /root/.docker/ 
+
+- name: copy dockercfg (credentials)
+  template:
+    src: .dockercfg
+    dest: /root/.docker/config.json
+    mode: 0600
+
+- name: v1.6 specific tasks
+  include: v1.6/main.yml
+  when: '"v1.6." in current_kube_version.stdout'
+
+# ENSURE DEFAULT CONFIGURATIONS
+#- name: Get master
+#  set_fact: 
+#    kubernetes_master: "{{ hostvars[item]['ansible_default_ipv4']['address'] }}"
+#  delegate_to: "{{ item }}"
+#  when:  hostvars[item].role == 'master'
+#  with_items: "{{groups['kubernetes']}}"
+#  always_run: true
+#  run_once: true
+#
+#- debug: var=kubernetes_master
+#  run_once: true
+#
+#- name: Configure kubernetes
+#  template: 
+#    src: {{ item.file }}.j2 
+#    dest: {{ item.path | default('/opt/kubernetes/cfg') }}/{{ item.file }} 
+#    mode: 0644 
+#    owner: root 
+#    group: root
+#  with_items:
+#   - {file: docker }
+#   - {file: flannel }
+#   - {file: kubelet }
+#   - {file: kube-proxy }
+#  when: hostvars[ansible_hostname].role == 'minion'
+#  tags: config
+#

@@ -1,0 +1,386 @@
+init_config:
+
+instances:
+  - name: lendico-mandate-1-0 staging
+    url: http://lendico-mandate-1-0.staging.svc.cluster.lendico:9010/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:staging
+
+  - name: lendico-mandate-1-0 production
+    url: http://lendico-mandate-1-0.productionish.svc.cluster.lendico:9010/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:production
+
+  - name: lendico-mandate-1-0 dev
+    url: http://lendico-mandate-1-0.dev.svc.cluster.lendico:9010/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:dev
+
+  - name: lendico-accounting-1 staging
+    url: http://lendico-accounting-1.staging.svc.cluster.lendico:8000/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:staging
+
+  - name: lendico-accounting-1 production
+    url: http://lendico-accounting-1.productionish.svc.cluster.lendico:8000/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:production
+
+  - name: lendico-accounting-1 dev
+    url: http://lendico-accounting-1.dev.svc.cluster.lendico:8000/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:dev
+
+  - name: lendico-loan-manager-1 staging
+    url: http://lendico-loan-manager-1.staging.svc.cluster.lendico:8081/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:staging
+
+  - name: lendico-loan-manager-1 production
+    url: http://lendico-loan-manager-1.productionish.svc.cluster.lendico:8081/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:production
+
+  - name: lendico-loan-manager-1 dev
+    url: http://lendico-loan-manager-1.dev.svc.cluster.lendico:8081/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:dev
+
+  - name: lendico-bank-account-0-1 staging
+    url: http://lendico-bank-account-0-1.staging.svc.cluster.lendico:9002/status
+    timeout: 20
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:staging
+
+  - name: lendico-bank-account-0-1 production
+    url: http://lendico-bank-account-0-1.productionish.svc.cluster.lendico:9002/status
+    timeout: 20
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:production
+
+  - name: lendico-bank-account-0-1 dev
+    url: http://lendico-bank-account-0-1.dev.svc.cluster.lendico:9002/status
+    timeout: 20
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:dev
+
+  - name: lendico-inv-settings-0-1 staging
+    url: http://lendico-inv-settings-0-1.staging.svc.cluster.lendico:9001/status
+    timeout: 20
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:staging
+
+  - name: lendico-inv-settings-0-1 production
+    url: http://lendico-inv-settings-0-1.productionish.svc.cluster.lendico:9001/status
+    timeout: 20
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:production
+
+  - name: lendico-inv-settings-0-1 dev
+    url: http://lendico-inv-settings-0-1.dev.svc.cluster.lendico:9001/status
+    timeout: 20
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:dev
+
+  - name: transactionface-0-1 staging
+    url: http://transactionface-0-1.staging.svc.cluster.lendico:8080/status
+    timeout: 15
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:staging
+
+  - name: transactionface-0-1 dev
+    url: http://transactionface-0-1.dev.svc.cluster.lendico:8080/status
+    timeout: 15
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:dev
+
+  - name: planface-0-1 staging
+    url: http://planface-0-1.staging.svc.cluster.lendico:8080/healthz
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:staging
+
+  - name: planface-0-1 production
+    url: http://planface-0-1.productionish.svc.cluster.lendico:8080/healthz
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:production
+
+  - name: planface-0-1 dev
+    url: http://planface-0-1.dev.svc.cluster.lendico:8080/healthz
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:dev
+
+  - name: planface-0-1 staging
+    url: http://planface-0-1.staging.svc.cluster.lendico:8080/healthz
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:staging
+
+  - name: planface-0-1 production
+    url: http://planface-0-1.productionish.svc.cluster.lendico:8080/healthz
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:production
+
+  - name: planface-0-1 dev
+    url: http://planface-0-1.dev.svc.cluster.lendico:8080/healthz
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:dev
+
+ - name: lendico-bm-0-1 staging
+    url: http://lendico-bm-0-1.staging.svc.cluster.lendico:9000/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:staging
+
+  - name: lendico-bm-0-1 production
+    url: http://lendico-bm-0-1.productionish.svc.cluster.lendico:9000/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:production
+
+  - name: lendico-bm-0-1 dev
+    url: http://lendico-bm-0-1.dev.svc.cluster.lendico:9000/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:dev
+
+ - name: lendico-calc-v10-3 staging
+    url: http://lendico-calc-v10-3.staging.svc.cluster.lendico:8080/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:staging
+
+  - name: lendico-calc-v10-3 production
+    url: http://lendico-calc-v10-3.productionish.svc.cluster.lendico:8080/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:production
+
+  - name: lendico-calc-v10-3 dev
+    url: http://lendico-calc-v10-3.dev.svc.cluster.lendico:8080/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:dev
+
+ - name: lendico-calc-v11-0 staging
+    url: http://lendico-calc-v11-0.staging.svc.cluster.lendico:8080/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:staging
+
+  - name: lendico-calc-v11-0 production
+    url: http://lendico-calc-v11-0.productionish.svc.cluster.lendico:8080/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:production
+
+  - name: lendico-calc-v11-0 dev
+    url: http://lendico-calc-v11-0.dev.svc.cluster.lendico:8080/status
+    timeout: 5
+
+    content_match: 'OK'
+    collect_response_time: true
+    skip_event: true
+
+    tags:
+      - cluster:lendico
+      - env:dev
